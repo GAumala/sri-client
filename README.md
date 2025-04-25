@@ -1,11 +1,13 @@
-#sri-client
+# sri-client
 
 Facturación en REPL
 
 Este programa es un ejemplo de como usar la [librería SRI](https://github.com/GAumala/SRI)
 
 Cada factura generada se guarda en una base datos local (H2) antes de
-enviarse al SRI. La base datos se usa para calcular secuencial correspondiente y registrar el estado de los comprobantes (AUTORIZADO, NO AUTORIZADO).
+enviarse al SRI.
+
+La base datos se usa para calcular el secuencial correspondiente y registrar el estado de los comprobantes (*AUTORIZADO, NO AUTORIZADO*).
 
 ### Setup
 
@@ -69,4 +71,10 @@ En un REPL usa el namespace `sri-client` para crear facturas
 
 ; consultar estado de autorizacion con el SRI
 (def resp (consult-factura latest))
+
+; mostrar facturas en base datos
+(db/list-facturas)
+
+; cargar una factura de la base de datos
+(def factura (db/get-factura-data 1))
 ```
