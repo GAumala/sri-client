@@ -5,7 +5,8 @@
             [sri-client.config :refer [config]]
             [sri-client.db :as db]
             [sri-client.factura :refer [gen-factura-row]]
-            [sri-client.registry]))
+            [sri-client.registry]
+            [sri-client.ride :as ride]))
 
 (defn- get-next-secuencial [{:keys [contribuyente secuencial-1]}
                             new-factura]
@@ -72,8 +73,13 @@
   (let [res (ws/autorizacion-comprobante ambiente clave-acceso)
         autorizacion (first (:autorizaciones res))]
     (condp = (:estado autorizacion)
-      "AUTORIZADO" (do (db/update-factura-estado {:id id
-                                                  :estado "autorizada"})
+      "AUTORIZADO" (do (db/update-factura-estado
+                        {:id id
+                         :autorizacion (some-> res
+                                               :autorizaciones
+                                               first
+                                               :numeroAutorizacion)
+                         :estado "autorizada"})
                        (println "Factura autorizada por el SRI"))
       "NO AUTORIZADO" (do (db/update-factura-estado {:id id
                                                      :estado "rechazada"})
@@ -85,3 +91,12 @@
                       (print-mensajes (:mensajes autorizacion)))
       (println "ERROR: resupuesta desconocida"))
     res))
+
+(defn gen-ride-by-id [id]
+  (let [factura (db/get-factura-data id)]
+    (ride/from-factura factura
+                       (str "ride-" (:clave-acceso factura) ".pdf"))))
+
+(defn gen-xml-by-id [id]
+  (let [factura (db/get-factura-data id)]
+    (spit (str "comprobante-" (:clave-acceso factura) ".xml") (:xml factura))))

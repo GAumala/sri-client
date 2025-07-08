@@ -6,7 +6,8 @@
                                           as-unqualified-lower-maps]]
             [next.jdbc.sql :refer [insert!
                                    delete!
-                                   update!]]
+                                   update!
+                                   get-by-id]]
             [next.jdbc :as jdbc]))
 
 (def clob-builder
@@ -35,6 +36,7 @@
 (defn- translate-from-db-keys [row]
   (rename-keys row {:pto_emi :pto-emi
                     :clave_acceso :clave-acceso}))
+
 (defn insert-factura [params]
   (let [new-factura (-> params
                         (select-keys [:ruc
@@ -44,13 +46,19 @@
                                       :ambiente
                                       :clave-acceso
                                       :estado
+                                      :content
                                       :xml])
-                        (translate-to-db-keys))
+                        (translate-to-db-keys)
+                        (update :content pr-str))
         row (insert! ds :facturas new-factura)]
     (:FACTURAS/ID row)))
 
-(defn update-factura-estado [{:keys [id estado]}]
-  (update! ds :facturas {:estado estado} {:id id}))
+(defn update-factura-estado [{:keys [id estado autorizacion]}]
+  (let [edits (if autorizacion
+                {:estado estado
+                 :autorizacion autorizacion}
+                {:estado estado})]
+    (update! ds :facturas edits {:id id})))
 
 (defn list-facturas
   ([] (list-facturas 10))
@@ -63,11 +71,11 @@
      (map translate-from-db-keys rows))))
 
 (defn get-factura-data [id]
-  (let [columns "id, ambiente, clave_acceso, xml"
-        stmt (str "SELECT " columns " FROM facturas WHERE id = ?")
-        opts {:builder-fn clob-builder}
-        rows (jdbc/execute! ds [stmt id] opts)]
-    (-> rows first translate-from-db-keys)))
+  (let [opts {:builder-fn clob-builder
+              :columns [:id :ambiente :clave_acceso :xml :content]}]
+    (some-> (get-by-id ds :facturas id opts)
+            (translate-from-db-keys)
+            (update :content read-string))))
 
 (defn delete-factura [id]
   (delete! ds :facturas {:id id}))

@@ -171,10 +171,11 @@
                       :propina "0.00"}
         info-adicional (gen-infoAdicional cliente)
         detalles (map item->detalle items)
-        factura (encoders/factura {:infoTributaria info-tributaria
-                                   :infoFactura info-factura
-                                   :detalles detalles
-                                   :infoAdicional info-adicional})
+        content {:infoTributaria info-tributaria
+                 :infoFactura info-factura
+                 :detalles detalles
+                 :infoAdicional info-adicional}
+        factura (encoders/factura content)
         xml (->> {:stream (io/input-stream (:path keystore))
                   :pass (:pass keystore)}
                  (sign-comprobante factura))]
@@ -182,6 +183,7 @@
         (select-keys [:ruc :estab :pto-emi])
         (conj {:clave-acceso clave-acceso
                :xml xml
+               :content content
                :secuencial secuencial
                :estado "pendiente"
                :ambiente ambiente}))))
