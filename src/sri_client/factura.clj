@@ -34,7 +34,8 @@
                   :codigoPorcentaje IVA_PERCENT_CODE
                   :baseImponible importe-str
                   :valor (format "%.2f" (* importe-dec IVA_DECIMAL))
-                  :tarifa IVA_PERCENT_INT}]}))
+                  :tarifa IVA_PERCENT_INT}]
+     :detallesAdicionales (:detalles-adicionales item)}))
 
 (defn- gen-formaPago [forma]
   (condp = forma
